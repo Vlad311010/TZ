@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -127,17 +128,14 @@ namespace Plugins.Dropbox
             return request;
         }
         
-        public static async Task DownloadAndSaveFile(string relativePathToFile)
+        public static IEnumerator DownloadAndSaveFile(string relativePathToFile)
         {
             // Create a download request
             UnityWebRequest downloadRequest = GetRequestForFileDownload(relativePathToFile);
 
             // Send the download request
             var operation = downloadRequest.SendWebRequest();
-            while (!operation.isDone)
-            {
-                await Task.Delay(100); // Wait until the request is completed
-            }
+            yield return operation; // Wait until the request is completed
 
             if (downloadRequest.result != UnityWebRequest.Result.Success)
             {
