@@ -16,7 +16,7 @@ public class DropboxDataHandler : MonoBehaviour
 
     public static DropboxDataHandler current;
 
-    [SerializeField] GameObject loadScreen;
+    [SerializeField] ProgressBar loadScreen;
     [SerializeField] string modsDataRelativePath = "";
     [SerializeField] string fileToDownload; 
 
@@ -27,15 +27,13 @@ public class DropboxDataHandler : MonoBehaviour
         current = this;
         Directory.CreateDirectory(Application.persistentDataPath + "/mods/files");
         StartCoroutine(Init());
-
-        // StartCoroutine(LoadModPreviewImage("/mods/1.png"));
     }
 
     private IEnumerator Init()
     {
         var task = DropboxHelper.Initialize();
         yield return new WaitUntil(() => task.IsCompleted);
-        yield return DropboxHelper.DownloadAndSaveFile(modsDataRelativePath);
+        yield return DropboxHelper.DownloadAndSaveFile(modsDataRelativePath, (p) => loadScreen.UpdateValue(p));
         LoadModsData();
     }
 
@@ -65,7 +63,7 @@ public class DropboxDataHandler : MonoBehaviour
         }
         else
         {
-            yield return DropboxHelper.DownloadAndSaveFile(relativePath);
+            yield return DropboxHelper.DownloadAndSaveFile(relativePath, p => { });
             StartCoroutine(LoadModPreviewImageCoroutine(relativePath, callback));
         }
     }
