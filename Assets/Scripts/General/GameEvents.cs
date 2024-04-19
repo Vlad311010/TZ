@@ -38,4 +38,22 @@ public class GameEvents : MonoBehaviour
         }
     }
 
+    public event Action onDownloadFail;
+    public void DownloadFail()
+    {
+        if (onDownloadFail != null)
+        {
+            onDownloadFail();
+        }
+    }
+
+    public event Action onInternetConnectionLost;
+    public void InternetConnectionLost()
+    {
+        if (onInternetConnectionLost != null)
+        {
+            onInternetConnectionLost();
+        }
+    }
+
 }

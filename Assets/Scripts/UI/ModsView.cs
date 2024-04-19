@@ -8,28 +8,26 @@ public class ModsView : MonoBehaviour
     [SerializeField] GameObject conterCardPrefab;
     [SerializeField] GameObject content;
     [SerializeField] GameObject modsListIsEmptyNotification;
+    [SerializeField] GameObject downloadFailedNotification;
 
     private List<ContentCard> cards;
 
 
     private void Awake()
     {
-        GameEvents.current.onModsDataLoaded += CreateContent;
-    }
-
-    private void OnDestroy()
-    {
-        GameEvents.current.onModsDataLoaded -= CreateContent;
+        CreateContent(DropboxDataHandler.current.Mods);
     }
 
     private void OnEnable()
     {
         GameEvents.current.onModsViewFilterChange += FilterContent;
+        GameEvents.current.onDownloadFail += ShowDownloadFailMessage;
     }
 
     private void OnDisable()
     {
         GameEvents.current.onModsViewFilterChange -= FilterContent;
+        GameEvents.current.onDownloadFail -= ShowDownloadFailMessage;
     }
 
     private void CreateContent(ModData[] data)
@@ -69,5 +67,10 @@ public class ModsView : MonoBehaviour
             c.gameObject.SetActive(true);
 
         modsListIsEmptyNotification.SetActive(cardsToShow.Count() == 0);
+    }
+
+    private void ShowDownloadFailMessage()
+    {
+        downloadFailedNotification.SetActive(true);
     }
 }

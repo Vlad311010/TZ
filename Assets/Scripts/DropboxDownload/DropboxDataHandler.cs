@@ -2,6 +2,8 @@ using Plugins.Dropbox;
 using System;
 using System.Collections;
 using System.IO;
+using System.Net;
+using System.Threading.Tasks;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.Networking;
@@ -14,11 +16,16 @@ public class DropboxDataHandler : MonoBehaviour
         public string[] categories;
     }
 
+
+    public ModData[] Mods => modsDataContainer.mods;
+    public string[] Categories => modsDataContainer.categories;
+
     public static DropboxDataHandler current;
 
     [SerializeField] ProgressBar loadScreen;
     [SerializeField] string modsDataRelativePath = "";
     [SerializeField] string fileToDownload; 
+    [SerializeField] GameObject reconnectBtn; 
 
     private ModsDataContainer modsDataContainer;
 
@@ -26,24 +33,41 @@ public class DropboxDataHandler : MonoBehaviour
     {
         current = this;
         Directory.CreateDirectory(Application.persistentDataPath + "/mods/files");
+        InitConnection();
+    }
+
+    public void InitConnection()
+    {
+        loadScreen.gameObject.SetActive(true);
         StartCoroutine(Init());
+    }
+
+    private void FaildToDownloadData()
+    {
+        Debug.Log("Failed to download data");
+        StopAllCoroutines();
+        loadScreen.gameObject.SetActive(true);
+        reconnectBtn.SetActive(true);
     }
 
     private IEnumerator Init()
     {
+        DropboxHelper.onFailedToDownload += FaildToDownloadData;
+
         var task = DropboxHelper.Initialize();
         yield return new WaitUntil(() => task.IsCompleted);
-        yield return DropboxHelper.DownloadAndSaveFile(modsDataRelativePath, (p) => loadScreen.UpdateValue(p));
+        task = DropboxHelper.DownloadAndSaveFile(modsDataRelativePath, (p) => loadScreen.UpdateValue(p));
+        yield return new WaitUntil(() => task.IsCompleted);
         LoadModsData();
+
+        DropboxHelper.onFailedToDownload -= FaildToDownloadData;
     }
 
     public void LoadModsData()
     {
         string modsDataJson = File.ReadAllText(Application.persistentDataPath + "/" + modsDataRelativePath);
         modsDataContainer = JsonUtility.FromJson<ModsDataContainer>(modsDataJson);
-        Debug.Log("Mod data loaded");
-        GameEvents.current.ModsDataLoaded(modsDataContainer.mods);
-        GameEvents.current.CategoriesLoaded(modsDataContainer.categories);
+        Debug.Log("Aplication data loaded");
     }
 
     public void LoadModPreviewImage(string relativePath, Action<Sprite> callback)
@@ -63,17 +87,10 @@ public class DropboxDataHandler : MonoBehaviour
         }
         else
         {
-            yield return DropboxHelper.DownloadAndSaveFile(relativePath, p => { });
+            Task task = DropboxHelper.DownloadAndSaveFile(relativePath, p => { });
+            yield return new WaitUntil(() => task.IsCompleted);
             StartCoroutine(LoadModPreviewImageCoroutine(relativePath, callback));
         }
     }
-
-
-    /*[ContextMenu("DownloadFile")]
-    public void DownloadFile()
-    {
-        StartCoroutine(DropboxHelper.DownloadAndSaveFile(fileToDownload));
-    }*/
-
 
 }

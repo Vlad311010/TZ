@@ -1,5 +1,7 @@
 using Plugins.Dropbox;
 using System.Collections;
+using System.IO;
+using System.Threading.Tasks;
 using TMPro;
 using UnityEngine;
 using UnityEngine.EventSystems;
@@ -15,18 +17,19 @@ public class ContentCard : MonoBehaviour
     [SerializeField] Button downloadBtn;
     [SerializeField] ProgressBar progressBar;
     [SerializeField] SpinnerScript spinner;
-    
-    private ModDataSO modData;
 
+    private static NativeShare nativeShare;
+    private ModDataSO modData;
     private string textTemplate = "<b>{0}<b>\r\n<size=36>{1}</size>";
 
 
 
     public void Init(ModDataSO modData)
     {
-        this.modData = modData;
+        if (nativeShare == null)
+            nativeShare = new NativeShare();
 
-        Debug.Log(modData.previewPath);
+        this.modData = modData;
         DropboxDataHandler.current.LoadModPreviewImage(modData.previewPath.TrimStart('/'), SetPreview);
         SetText();
     }
@@ -46,10 +49,28 @@ public class ContentCard : MonoBehaviour
     {
         downloadBtn.gameObject.SetActive(false);
         progressBar.gameObject.SetActive(true);
-        yield return DropboxHelper.DownloadAndSaveFile(modData.filePath.TrimStart('/'), (p) => { progressBar.UpdateValue(p); } );
+
+        nativeShare.Clear();
+        DropboxHelper.onFailedToDownload += FailedToDownloadPopup;
+
+        Task task = DropboxHelper.DownloadAndSaveFile(modData.filePath.TrimStart('/'), (p) => { progressBar.UpdateValue(p); });
+        yield return new WaitUntil(() => task.IsCompleted);
+
+        DropboxHelper.onFailedToDownload -= FailedToDownloadPopup;
+        if (File.Exists(Application.persistentDataPath + modData.filePath)) 
+        {
+            nativeShare.AddFile(Application.persistentDataPath + modData.filePath);
+            nativeShare.Share();
+        }
+
         downloadBtn.gameObject.SetActive(true);
         progressBar.gameObject.SetActive(false);
 
+    }
+
+    private void FailedToDownloadPopup()
+    {
+        GameEvents.current.DownloadFail();
     }
 
     public void Donwload()

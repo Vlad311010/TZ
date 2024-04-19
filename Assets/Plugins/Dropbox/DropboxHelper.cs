@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections;
 using System.Text;
 using System.Threading.Tasks;
 using Newtonsoft.Json.Linq;
@@ -10,6 +9,8 @@ namespace Plugins.Dropbox
 {
     public static class DropboxHelper
     {
+        public static Action onFailedToDownload;
+
         // paste from dropbox console
         private const string AppKey = "grr8w8pnylo5onj";
         private const string AppSecret = "jlv4xmimt72motr";
@@ -59,13 +60,15 @@ namespace Plugins.Dropbox
             {
                 Debug.LogError(request.error);
                 Debug.LogError(request.downloadHandler.text);
-                return;
             }
-            
-            var parsedAnswer = JObject.Parse(request.downloadHandler.text);
-            var refreshTokenString = parsedAnswer["refresh_token"]?.Value<string>();
+            else
+            {
 
-           Debug.Log("Copy this string to RefreshToken: " + refreshTokenString);
+                var parsedAnswer = JObject.Parse(request.downloadHandler.text);
+                var refreshTokenString = parsedAnswer["refresh_token"]?.Value<string>();
+
+                Debug.Log("Copy this string to RefreshToken: " + refreshTokenString);
+            }
         }
 #endif
 
@@ -102,14 +105,19 @@ namespace Plugins.Dropbox
             {
                 Debug.LogError(request.error);
                 Debug.LogError(request.downloadHandler.text);
+                if (onFailedToDownload != null)
+                    onFailedToDownload();
             }
+            else
+            {
 
-            Debug.Log("Success! Full message from dropbox: " + request.downloadHandler.text);
+                Debug.Log("Success! Full message from dropbox: " + request.downloadHandler.text);
 
-           var data = JObject.Parse(request.downloadHandler.text);
-           _tempRuntimeToken = data["access_token"]?.Value<string>();
+                var data = JObject.Parse(request.downloadHandler.text);
+                _tempRuntimeToken = data["access_token"]?.Value<string>();
 
-            Debug.Log("Token: " + _tempRuntimeToken);
+                Debug.Log("Token: " + _tempRuntimeToken);
+            }
         }
 
         /// <summary>
@@ -128,7 +136,7 @@ namespace Plugins.Dropbox
             return request;
         }
 
-        public static IEnumerator DownloadAndSaveFile(string relativePathToFile, Action<float> progressCallback)
+        public static async Task DownloadAndSaveFile(string relativePathToFile, Action<float> progressCallback)
         {
             // Create a download request
             UnityWebRequest downloadRequest = GetRequestForFileDownload(relativePathToFile);
@@ -138,13 +146,15 @@ namespace Plugins.Dropbox
 
             while (!operation.isDone) // Wait until the request is completed
             {
-                yield return null;
+                await Task.Delay(100);
                 progressCallback(operation.progress);
             }
 
             if (downloadRequest.result != UnityWebRequest.Result.Success)
             {
                 Debug.LogError("Failed to download file: " + downloadRequest.error);
+                if (onFailedToDownload != null)
+                    onFailedToDownload();
             }
             else
             {
