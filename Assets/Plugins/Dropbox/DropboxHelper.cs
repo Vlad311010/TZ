@@ -135,7 +135,35 @@ namespace Plugins.Dropbox
 
             // Send the download request
             var operation = downloadRequest.SendWebRequest();
+
             yield return operation; // Wait until the request is completed
+
+            if (downloadRequest.result != UnityWebRequest.Result.Success)
+            {
+                Debug.LogError("Failed to download file: " + downloadRequest.error);
+            }
+            else
+            {
+                // Save the downloaded file to the persistent data path
+                string filePath = Application.persistentDataPath + "/" + relativePathToFile;
+                System.IO.File.WriteAllBytes(filePath, downloadRequest.downloadHandler.data);
+                Debug.Log("File saved to: " + filePath);
+            }
+        }
+
+        public static IEnumerator DownloadAndSaveFile(string relativePathToFile, Action<float> progressCallback)
+        {
+            // Create a download request
+            UnityWebRequest downloadRequest = GetRequestForFileDownload(relativePathToFile);
+
+            // Send the download request
+            var operation = downloadRequest.SendWebRequest();
+
+            while (!operation.isDone) // Wait until the request is completed
+            {
+                yield return null;
+                progressCallback(operation.progress);
+            }
 
             if (downloadRequest.result != UnityWebRequest.Result.Success)
             {

@@ -1,5 +1,8 @@
+using Plugins.Dropbox;
+using System.Collections;
 using TMPro;
 using UnityEngine;
+using UnityEngine.EventSystems;
 using UnityEngine.UI;
 
 public class ContentCard : MonoBehaviour
@@ -10,6 +13,7 @@ public class ContentCard : MonoBehaviour
     [SerializeField] Image preview;
     [SerializeField] TMP_Text text;
     [SerializeField] Button downloadBtn;
+    [SerializeField] ProgressBar progressBar;
     [SerializeField] SpinnerScript spinner;
     
     private ModDataSO modData;
@@ -38,9 +42,18 @@ public class ContentCard : MonoBehaviour
         text.text = string.Format(textTemplate, modData.title, modData.description);
     }
 
-    private void Download()
+    private IEnumerator DownloadCoroutine()
     {
+        downloadBtn.gameObject.SetActive(false);
+        progressBar.gameObject.SetActive(true);
+        yield return DropboxHelper.DownloadAndSaveFile(modData.filePath.TrimStart('/'), (p) => { progressBar.UpdateValue(p); } );
+        downloadBtn.gameObject.SetActive(true);
+        progressBar.gameObject.SetActive(false);
 
     }
 
+    public void Donwload()
+    {
+        StartCoroutine(DownloadCoroutine());
+    }
 }

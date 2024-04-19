@@ -48,7 +48,6 @@ public class DropboxDataHandler : MonoBehaviour
         GameEvents.current.CategoriesLoaded(modsDataContainer.categories);
     }
 
-
     public void LoadModPreviewImage(string relativePath, Action<Sprite> callback)
     {
         StartCoroutine(LoadModPreviewImageCoroutine(relativePath, callback));
@@ -70,6 +69,7 @@ public class DropboxDataHandler : MonoBehaviour
             StartCoroutine(LoadModPreviewImageCoroutine(relativePath, callback));
         }
     }
+
 
     /*[ContextMenu("DownloadFile")]
     public void DownloadFile()
