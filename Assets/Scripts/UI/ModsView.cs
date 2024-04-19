@@ -7,8 +7,10 @@ public class ModsView : MonoBehaviour
 {
     [SerializeField] GameObject conterCardPrefab;
     [SerializeField] GameObject content;
+    [SerializeField] GameObject modsListIsEmptyNotification;
 
     private List<ContentCard> cards;
+
 
     private void Awake()
     {
@@ -65,5 +67,7 @@ public class ModsView : MonoBehaviour
 
         foreach (ContentCard c in cardsToShow)
             c.gameObject.SetActive(true);
+
+        modsListIsEmptyNotification.SetActive(cardsToShow.Count() == 0);
     }
 }
