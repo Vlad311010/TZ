@@ -56,11 +56,8 @@ public class DropboxDataHandler : MonoBehaviour
 
     private IEnumerator LoadModPreviewImageCoroutine(string relativePath, Action<Sprite> callback)
     {
-        Debug.Log("Image Load");
-        Debug.Log("Exists " + File.Exists(Application.persistentDataPath + "/" + relativePath));
         if (File.Exists(Application.persistentDataPath + "/" + relativePath))
         {
-            
             UnityWebRequest request = UnityWebRequestTexture.GetTexture(Application.persistentDataPath + "/" + relativePath);
             yield return request.SendWebRequest();
             Texture2D texture = ((DownloadHandlerTexture)request.downloadHandler).texture;
@@ -69,7 +66,6 @@ public class DropboxDataHandler : MonoBehaviour
         }
         else
         {
-            Debug.Log("Download Image");
             yield return DropboxHelper.DownloadAndSaveFile(relativePath);
             StartCoroutine(LoadModPreviewImageCoroutine(relativePath, callback));
         }

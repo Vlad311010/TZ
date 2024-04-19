@@ -4,6 +4,9 @@ using UnityEngine.UI;
 
 public class ContentCard : MonoBehaviour
 {
+    public string Title => modData.title;
+    public string Category => modData.category;
+
     [SerializeField] Image preview;
     [SerializeField] TMP_Text text;
     [SerializeField] Button downloadBtn;

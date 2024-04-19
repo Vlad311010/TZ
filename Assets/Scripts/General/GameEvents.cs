@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 [DefaultExecutionOrder(-5)]
@@ -25,6 +26,15 @@ public class GameEvents : MonoBehaviour
         if (onCategoriesLoaded != null)
         {
             onCategoriesLoaded(categories);
+        }
+    }
+
+    public event Action<string, IEnumerable<string>> onModsViewFilterChange;
+    public void ModsViewFilterChange(string titleFilter, IEnumerable<string> categoriesFilter)
+    {
+        if (onModsViewFilterChange != null)
+        {
+            onModsViewFilterChange(titleFilter, categoriesFilter);
         }
     }
 
